@@ -1,9 +1,11 @@
 <?php
 namespace dmstr\widgets;
+
 use Yii;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\helpers\Html;
+
 /**
  * Class Menu
  * Theme menu widget.
@@ -13,7 +15,7 @@ class Menu extends \yii\widgets\Menu
     /**
      * @inheritdoc
      */
-    public $linkTemplate = '<a href="{url}">{icon} {label}</a>';
+    public $linkTemplate = '<a href="{url}">{icon} {label} {badges}</a>';
     /**
      * @inheritdoc
      * Styles all labels of items on sidebar by AdminLTE
@@ -71,18 +73,33 @@ class Menu extends \yii\widgets\Menu
     protected function renderItem($item)
     {
         if (isset($item['items'])) {
-            $labelTemplate = '<a href="{url}">{icon} {label} <span class="pull-right-container"><i class="fa fa-angle-left pull-right"></i></span></a>';
-            $linkTemplate = '<a href="{url}">{icon} {label} <span class="pull-right-container"><i class="fa fa-angle-left pull-right"></i></span></a>';
+            $labelTemplate = '<a href="{url}">{icon} {label} {badges}<span class="pull-right-container"><i class="fa fa-angle-left pull-right"></i></span></a>';
+            $linkTemplate = '<a href="{url}">{icon} {label} {badges}<span class="pull-right-container"><i class="fa fa-angle-left pull-right"></i></span></a>';
         } else {
             $labelTemplate = $this->labelTemplate;
             $linkTemplate = $this->linkTemplate;
         }
 
+        $badges = '';
+        if (isset($item['badges'])) {
+            if (is_string($item['badges'])) {
+                $badges = '<span class="pull-right-container">' . $item['badges'] . '</span>';
+            } else {
+                if (is_array($item['badges'])) {
+                    array_walk($item['badges'], function ($badge) use (&$badges) {
+                        $badges .= $badge;
+                    });
+                }
+            }
+            $badges = '<span style="'.(isset($item['items']) ? 'margin-right:20px' : null).'" class="pull-right-container">' . $badges . '</span>';
+        }
+
         $replacements = [
-            '{label}' => strtr($this->labelTemplate, ['{label}' => $item['label'],]),
+            '{label}' => strtr($this->labelTemplate, ['{label}' => $item['label']]),
             '{icon}' => empty($item['icon']) ? $this->defaultIconHtml
                 : '<i class="' . self::$iconClassPrefix . $item['icon'] . '"></i> ',
             '{url}' => isset($item['url']) ? Url::to($item['url']) : 'javascript:void(0);',
+            '{badges}' => $badges,
         ];
 
         $template = ArrayHelper::getValue($item, 'template', isset($item['url']) ? $linkTemplate : $labelTemplate);
@@ -125,11 +142,11 @@ class Menu extends \yii\widgets\Menu
                     '{show}' => $item['active'] ? "style='display: block'" : '',
                     '{items}' => $this->renderItems($item['items']),
                 ]);
-				if (isset($options['class'])) {
-					$options['class'] .= ' treeview';
-				} else {
-					$options['class'] = 'treeview';
-				}
+                if (isset($options['class'])) {
+                    $options['class'] .= ' treeview';
+                } else {
+                    $options['class'] = 'treeview';
+                }
             }
             $lines[] = Html::tag($tag, $menu, $options);
         }
